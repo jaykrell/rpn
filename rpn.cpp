@@ -29,11 +29,15 @@ string rpn(const string& input)
         case ' ':
             break;
         case '+':
+            // Defer any number of pluses to the end, i.e. without
+            // knowing how many multiplies are ahead.
             ++pluses;
             break;
         case '*':
+            // Swap * and the next token.
             times = true;
-            break;
+            ++arg;
+            while (*arg == ' ') ++arg;
         default:
             size_t len = strcspn(arg, "+* ");
             output.append(arg, len);
