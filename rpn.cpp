@@ -1,13 +1,12 @@
 #include <string.h>
 #include <assert.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string>
 using std::string;
 
-std::string argv_join(int argc, char** argv)
+string argv_join(int argc, char** argv)
 {
-    std::string a;
+    string a;
 
     for (int i = 1; i < argc; ++i)
         a.append(argv[i], argv[i] + strlen(argv[i]));
@@ -15,38 +14,35 @@ std::string argv_join(int argc, char** argv)
     return a;
 }
 
-std::string rpn(const std::string& input)
+string rpn(const string& input)
 {
     int pluses{};
-    int times{};
-    int value{};
+    bool times{};
     string output;
 
     output.reserve(input.size());
 
-    for (const char* arg = input.c_str(); char ch = *arg;)
+    for (const char* arg = input.c_str(); char ch = *arg; ++arg)
     {
         switch (ch)
         {
         case ' ':
-            ++arg;
             break;
         case '+':
-            ++arg;
             ++pluses;
             break;
         case '*':
-            ++arg;
-            ++times;
+            times = true;
             break;
         default:
-            value = strtol(arg, const_cast<char**>(&arg), 10);
-            output += std::to_string(value);
+            size_t len = strspn(arg, "0123456789");
+            output.append(arg, len);
+            arg += len - 1;
             output += " ";
             if (times)
             {
                 output += "* ";
-                --times;
+                times = false;
             }
             break;
         }
@@ -65,4 +61,13 @@ int main(int argc, char** argv)
 
     assert(rpn("1+2*3") == "1 2 3 * + ");
     assert(rpn("1*2+3") == "1 2 * 3 + ");
+
+    assert(rpn("1 + 2 + 3 + 4") == "1 2 3 4 + + + ");
+    assert(rpn("1 * 2 * 3 * 4") == "1 2 * 3 * 4 * ");
+    assert(rpn("1 + 2 * 3 + 4 * 5") == "1 2 3 * 4 5 * + + ");
+    assert(rpn("1 + 2 + 3 + 4 * 5 * 6 * 7 ") == "1 2 3 4 5 * 6 * 7 * + + + ");
+    assert(rpn("1 * 2 * 3 * 4 + 5 + 6 + 7 ") == "1 2 * 3 * 4 * 5 6 7 + + + ");
+
+    assert(rpn("1 + 2 + 3 + 4 * 5 * 6 * 7 + 8") == "1 2 3 4 5 * 6 * 7 * 8 + + + + ");
+    assert(rpn("1 * 2 * 3 * 4 + 5 + 6 + 7 * 8") == "1 2 * 3 * 4 * 5 6 7 8 * + + + ");
 }
