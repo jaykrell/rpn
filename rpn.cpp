@@ -35,7 +35,7 @@ string rpn(const string& input)
             times = true;
             break;
         default:
-            size_t len = strspn(arg, "0123456789");
+            size_t len = strcspn(arg, "+* ");
             output.append(arg, len);
             arg += len - 1;
             output += " ";
@@ -70,4 +70,6 @@ int main(int argc, char** argv)
 
     assert(rpn("1 + 2 + 3 + 4 * 5 * 6 * 7 + 8") == "1 2 3 4 5 * 6 * 7 * 8 + + + + ");
     assert(rpn("1 * 2 * 3 * 4 + 5 + 6 + 7 * 8") == "1 2 * 3 * 4 * 5 6 7 8 * + + + ");
+
+    assert(rpn("A+bc*3") == "A bc 3 * + ");
 }
