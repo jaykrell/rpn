@@ -143,6 +143,37 @@ int main(int argc, char** argv)
         printf("opt %s => %s\n", in.c_str(), opt.c_str());
     }
 
+    assert(count_chars("", 0) == 0);
+    assert(count_chars("", 'a') == 0);
+
+    assert(count_chars("a", 0) == 0);
+    assert(count_chars("a", 'a') == 1);
+    assert(count_chars("A", 'a') == 0);
+
+    assert(count_chars("aa", 'A') == 0);
+    assert(count_chars("aa", 0) == 0);
+    assert(count_chars("aa", 'a') == 2);
+    assert(count_chars("Aa", 'a') == 1);
+    assert(count_chars("aA", 'a') == 1);
+    assert(count_chars("AA", 'a') == 0);
+
+    assert(count_chars("AAA", 'a') == 0);
+    assert(count_chars("aAA", 'a') == 1);
+    assert(count_chars("AaA", 'a') == 1);
+    assert(count_chars("AAa", 'a') == 1);
+
+    assert(count_chars("AAA", 'a') == 0);
+    assert(count_chars("aaA", 'a') == 2);
+    assert(count_chars("Aaa", 'a') == 2);
+    assert(count_chars("aAa", 'a') == 2);
+
+    assert(count_chars("aaAA", 'a') == 2);
+    assert(count_chars("AaaA", 'a') == 2);
+    assert(count_chars("AAaa", 'a') == 2);
+    assert(count_chars("aAaA", 'a') == 2);
+    assert(count_chars("AaAa", 'a') == 2);
+    assert(count_chars("aAAa", 'a') == 2);
+
     static const struct {
         const char* in;
         const char* expected;
