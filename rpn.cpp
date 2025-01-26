@@ -16,7 +16,7 @@ string argv_join(int argc, char** argv)
 
 string rpn(const string& input)
 {
-    int pluses{};
+    size_t pluses{};
     bool times{};
     string output;
 
@@ -51,7 +51,7 @@ string rpn(const string& input)
             break;
         }
     }
-    while (pluses--)
+    for (size_t i = 0; i < pluses; ++i)
         output += "+ ";
     return output;
 }
@@ -99,7 +99,6 @@ string rpn_opt(const string& input)
             ++arg;
             while (*arg == ' ') ++arg;
         default:
-            multiplies_remaining -= (multiplies_remaining && ch == '*');
             size_t len = strcspn(arg, "+* ");
             output.append(arg, len);
             arg += len - 1;
@@ -110,19 +109,39 @@ string rpn_opt(const string& input)
                 output += ' ';
                 defer = 0;
             }
+            if (multiplies_remaining && ch == '*')
+            {
+                --multiplies_remaining;
+                if (multiplies_remaining == 0)
+                {
+                    for (size_t i = 0; i < pluses; ++i)
+                        output += "+ ";
+                    pluses = 0;
+                }
+            }
             break;
         }
     }
-    while (pluses--)
+    for (size_t i = 0; i < pluses; ++i)
         output += "+ ";
     return output;
 }
 
 int main(int argc, char** argv)
 {
-    string input = argv_join(argc, argv);
+    string in = argv_join(argc, argv);
     int errors{};
-    string output = rpn(input);
+    string out;
+    string opt;
+
+    if (in.size())
+    {
+        out = rpn(in);
+        opt = rpn_opt(in);
+
+        printf("%s => %s\n", in.c_str(), out.c_str());
+        printf("opt %s => %s\n", in.c_str(), opt.c_str());
+    }
 
     static const struct {
         const char* in;
@@ -136,7 +155,7 @@ int main(int argc, char** argv)
         /*4*/ {"1 + 2 * 3 + 4 * 5", "1 2 3 * 4 5 * + + "},
         /*5*/ {"1 + 2 + 3 + 4 * 5 * 6 * 7 ", "1 2 3 4 5 * 6 * 7 * + + + "},
         /*6*/ {"1 * 2 * 3 * 4 + 5 + 6 + 7 ", "1 2 * 3 * 4 * 5 6 7 + + + ", "1 2 * 3 * 4 * 5 + 6 + 7 + "},
-        /*7*/ {"1 + 2 + 3 + 4 * 5 * 6 * 7 + 8", "1 2 3 4 5 * 6 * 7 * 8 + + + + "},
+        /*7*/ {"1 + 2 + 3 + 4 * 5 * 6 * 7 + 8", "1 2 3 4 5 * 6 * 7 * 8 + + + + ", "1 2 3 4 5 * 6 * 7 * + + + 8 + "},
         /*8*/ {"1 * 2 * 3 * 4 + 5 + 6 + 7 * 8", "1 2 * 3 * 4 * 5 6 7 8 * + + + "},
         /*9*/ {"A+bc*3", "A bc 3 * + "},
     };
@@ -145,8 +164,8 @@ int main(int argc, char** argv)
 
     for (const auto& test: tests)
     {
-        std::string out = rpn(test.in);
-        std::string opt = rpn_opt(test.in);
+        out = rpn(test.in);
+        opt = rpn_opt(test.in);
         bool success = (out == test.expected);
         errors += !success;
         printf("%d %s: %s => %s\n", t, success ? "success" : "fail", test.in, out.c_str());
