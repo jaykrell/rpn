@@ -127,22 +127,8 @@ string rpn_opt(const string& input)
     return output;
 }
 
-int main(int argc, char** argv)
+void test_count_chars()
 {
-    string in = argv_join(argc, argv);
-    int errors{};
-    string out;
-    string opt;
-
-    if (in.size())
-    {
-        out = rpn(in);
-        opt = rpn_opt(in);
-
-        printf("%s => %s\n", in.c_str(), out.c_str());
-        printf("opt %s => %s\n", in.c_str(), opt.c_str());
-    }
-
     assert(count_chars("", 0) == 0);
     assert(count_chars("", 'a') == 0);
 
@@ -173,6 +159,25 @@ int main(int argc, char** argv)
     assert(count_chars("aAaA", 'a') == 2);
     assert(count_chars("AaAa", 'a') == 2);
     assert(count_chars("aAAa", 'a') == 2);
+}
+
+int main(int argc, char** argv)
+{
+    string in = argv_join(argc, argv);
+    int errors{};
+    string out;
+    string opt;
+
+    test_count_chars();
+
+    if (in.size())
+    {
+        out = rpn(in);
+        opt = rpn_opt(in);
+
+        printf("%s => %s\n", in.c_str(), out.c_str());
+        printf("opt %s => %s\n", in.c_str(), opt.c_str());
+    }
 
     static const struct {
         const char* in;
