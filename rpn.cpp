@@ -53,27 +53,109 @@ string rpn(const string& input)
     }
     while (pluses--)
         output += "+ ";
-    printf("%s\n", output.c_str());
+    return output;
+}
+
+size_t count_chars(const string& input, char ch)
+{
+    size_t count{};
+    const char* p = input.c_str();
+    while (p = strchr(p, ch))
+    {
+        ++count;
+        ++p;
+    }
+    return count;
+}
+
+string rpn_opt(const string& input)
+{
+    // Use less stack in evaluation.
+
+    size_t pluses{};
+    char defer{};
+    string output;
+
+    size_t multiplies_remaining = count_chars(input, '*');
+
+    output.reserve(input.size());
+
+    for (const char* arg = input.c_str(); char ch = *arg; ++arg)
+    {
+        switch (ch)
+        {
+        case ' ':
+            break;
+        case '+':
+            // Defer any number of pluses to after all multiplies.
+            if (multiplies_remaining)
+            {
+                ++pluses;
+                break;
+            }
+        case '*':
+            // Swap * and the next token.
+            defer = ch;
+            ++arg;
+            while (*arg == ' ') ++arg;
+        default:
+            multiplies_remaining -= (multiplies_remaining && ch == '*');
+            size_t len = strcspn(arg, "+* ");
+            output.append(arg, len);
+            arg += len - 1;
+            output += " ";
+            if (defer)
+            {
+                output += defer;
+                output += ' ';
+                defer = 0;
+            }
+            break;
+        }
+    }
+    while (pluses--)
+        output += "+ ";
     return output;
 }
 
 int main(int argc, char** argv)
 {
     string input = argv_join(argc, argv);
-
+    int errors{};
     string output = rpn(input);
 
-    assert(rpn("1+2*3") == "1 2 3 * + ");
-    assert(rpn("1*2+3") == "1 2 * 3 + ");
+    static const struct {
+        const char* in;
+        const char* expected;
+        const char* expected_opt;
+    } tests[] = {
+        /*0*/ {"1+2*3", "1 2 3 * + "},
+        /*1*/ {"1*2+3", "1 2 * 3 + "},
+        /*2*/ {"1 + 2 + 3 + 4", "1 2 3 4 + + + ", "1 2 + 3 + 4 + "},
+        /*3*/ {"1 * 2 * 3 * 4", "1 2 * 3 * 4 * "},
+        /*4*/ {"1 + 2 * 3 + 4 * 5", "1 2 3 * 4 5 * + + "},
+        /*5*/ {"1 + 2 + 3 + 4 * 5 * 6 * 7 ", "1 2 3 4 5 * 6 * 7 * + + + "},
+        /*6*/ {"1 * 2 * 3 * 4 + 5 + 6 + 7 ", "1 2 * 3 * 4 * 5 6 7 + + + ", "1 2 * 3 * 4 * 5 + 6 + 7 + "},
+        /*7*/ {"1 + 2 + 3 + 4 * 5 * 6 * 7 + 8", "1 2 3 4 5 * 6 * 7 * 8 + + + + "},
+        /*8*/ {"1 * 2 * 3 * 4 + 5 + 6 + 7 * 8", "1 2 * 3 * 4 * 5 6 7 8 * + + + "},
+        /*9*/ {"A+bc*3", "A bc 3 * + "},
+    };
 
-    assert(rpn("1 + 2 + 3 + 4") == "1 2 3 4 + + + ");
-    assert(rpn("1 * 2 * 3 * 4") == "1 2 * 3 * 4 * ");
-    assert(rpn("1 + 2 * 3 + 4 * 5") == "1 2 3 * 4 5 * + + ");
-    assert(rpn("1 + 2 + 3 + 4 * 5 * 6 * 7 ") == "1 2 3 4 5 * 6 * 7 * + + + ");
-    assert(rpn("1 * 2 * 3 * 4 + 5 + 6 + 7 ") == "1 2 * 3 * 4 * 5 6 7 + + + ");
+    int t{};
 
-    assert(rpn("1 + 2 + 3 + 4 * 5 * 6 * 7 + 8") == "1 2 3 4 5 * 6 * 7 * 8 + + + + ");
-    assert(rpn("1 * 2 * 3 * 4 + 5 + 6 + 7 * 8") == "1 2 * 3 * 4 * 5 6 7 8 * + + + ");
+    for (const auto& test: tests)
+    {
+        std::string out = rpn(test.in);
+        std::string opt = rpn_opt(test.in);
+        bool success = (out == test.expected);
+        errors += !success;
+        printf("%d %s: %s => %s\n", t, success ? "success" : "fail", test.in, out.c_str());
 
-    assert(rpn("A+bc*3") == "A bc 3 * + ");
+        success = (opt == (test.expected_opt ? test.expected_opt : test.expected));
+        errors += !success;
+        printf("%d opt %s: %s => %s\n", t, success ? "success" : "fail", test.in, opt.c_str());
+        ++t;
+    }
+    printf("errors:%d\n", errors);
+    return errors;
 }
